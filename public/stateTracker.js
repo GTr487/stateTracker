@@ -292,8 +292,3 @@
 
     };
 }(jQuery));
-
-
-$(document).ready(function(){
-    $("#gg").StateTracker();
-});
