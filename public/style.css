@@ -1,0 +1,77 @@
+*{
+    margin: 0;
+    padding: 0;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+html{
+    background: #fafafa;
+    overflow: hidden;
+}
+
+.cont{
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* ----------------------------------------- */
+
+
+/* .stTracker{
+    overflow: auto;
+    font-size: 16px;
+}
+.stTracker__cont{
+    padding: .5em;
+    display: flex;
+}
+.stTracker__stage{
+    text-align: center;
+}
+.stTracker__icon{
+    font-size: 2em;
+    background: #fff;
+    border: 1px solid #eee;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: .5em;
+    border-radius: 50%;
+} 
+.stTracker__icon i{
+    width:1em;
+    height: 1em;
+}
+.stTracker__title{
+    margin-top: .5em;
+}
+.stTracker__arrow{
+    display: flex;
+    align-items: center;
+    padding-bottom: 1.5em;
+    margin: 0 2em 0 1.5em;
+}
+.stTracker__arrow span{
+    display: inline-block;
+    padding: .5em;
+    border: solid #333;
+    border-width: 0 3px 3px 0;
+    transform: rotate(-45deg);
+} */
+
+/*  */
+
+.stTracker__icon--Canceled{ color: red; }
+.state-confirmed{ color: green; }
+
+
+
+
+.bloque,
+.bloque__elemento,
+.bloque__elemento--modificador{
+    content:'exeplo';
+}
