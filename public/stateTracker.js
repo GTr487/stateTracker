@@ -6,28 +6,12 @@
             stages: [
                 {
                     name: "stage 1",
-                    state: "Verify"
-                },{
-                    name: "stage 2",
-                    state: "Canceled"
-                },{
-                    name: "stage 3",
-                    state: "Pending"
-                },{
-                    name: "stage 4",
-                    state: "Canceled"
+                    state: "Pending",
+                    index: "0"
                 }
             ],
             states: [
                 {
-                    name: "Verify",
-                    color: "#107c10",
-                    icon: "ms-Icon ms-Icon--CheckMark"
-                },{
-                    name: "Canceled",
-                    color: "#f00",
-                    icon: "ms-Icon ms-Icon--Cancel"
-                },{
                     name: "Pending",
                     color: "#222",
                     icon: "ms-Icon ms-Icon--Help"
@@ -65,12 +49,16 @@
                 .prop('type', 'text/css')
                 .html('\
                 .stTracker{                                  \
-                    overflow: auto;                          \
                     font-size: 16px;                         \
                 }                                            \
                 .stTracker__cont{                            \
                     padding: .5em;                           \
                     display: flex;                           \
+                    flex-wrap: wrap;                         \
+                }                                            \
+                .stTracker__box{                             \
+                    display: flex;                           \
+                    margin-top: 1em;                         \
                 }                                            \
                 .stTracker__stage{                           \
                     text-align: center;                      \
@@ -105,29 +93,23 @@
                     padding: .5em;                           \
                     border: solid ' +arrowColor+ ';          \
                     border-width: 0 3px 3px 0;               \
+                }                                            \
+                .arrow--U span{                              \
+                    transform: rotate(-135deg);              \
+                }                                            \
+                .arrow--R span{                              \
                     transform: rotate(-45deg);               \
+                }                                            \
+                .arrow--D span{                              \
+                    transform: rotate(45deg);                \
+                }                                            \
+                .arrow--L span{                              \
+                    transform: rotate(135deg);               \
                 }                                            \
                 ').appendTo('head');
         }
 
         setDefaultClasses('titleColor', 'IconColor', 'arrowColor', '#fff', '#eee');
-
-        /**
-         * Create class to a state
-         * @param {String} className Class Name of State
-         * @param {String} [color='#000000'] color of State icon
-         */
-        var createIconStateClass = function(className, color){
-            if(!regExp.test(color)) color = '#000000';
-            if(className.length < 1) throw "ClassName Empty";
-            className = getSlashedNames(className);
-            ///////SOLUCIONAR ESTO
-            $('head').append('\
-                            <style>\
-                            .stTracker__icon--' +className+ '{ color: ' +color+ '; }\
-                            </style>');
-            console.log('.stTracker__icon--' +className+ '{ color: ' +color+ '; }')
-        }
 
         /**
          * Get a string and return a string with '-' format
@@ -149,10 +131,10 @@
          * @param {String} state name of an existing State
          * @return {object} jQuery Object
          */
-        $.fn.StateTracker.createStage = function(name, state){
+        $.fn.StateTracker.createStage = function(name, state, index){
             if(!name) return;
             var idStg = (getSlashedNames(name)) ? 'id="' +getSlashedNames(name)+ '"' : "";
-            var stage = $('<div '+idStg+ '></div>').addClass('stTracker__stage');
+            var stage = $('<div data-index="' +index+ '" '+idStg+ '></div>').addClass('stTracker__stage');
             stage.prop('state', state)
             $('<div></div>').addClass('stTracker__icon')
                             .append('<i></i>')
@@ -163,8 +145,9 @@
             return stage;
         }
 
-        $.fn.StateTracker.createArrow = function(){
-            return $('<div></div>').addClass('stTracker__arrow')
+        $.fn.StateTracker.createArrow = function(direction){
+            if(direction != 'U' && direction != 'R' && direction != 'D' && direction != 'L') return;
+            return $('<div></div>').addClass('stTracker__arrow arrow--' +direction)
                                    .append('<span></span>');
         }
 
@@ -176,58 +159,135 @@
                    .prop('states', {});
             var cont = $('<div></div>').addClass('stTracker__cont').appendTo(this);
 
-            if(Array.isArray(settings.states)){
-                settings.states.forEach(function(state){
-                    self.states[getSlashedNames(state.name)] = {
-                        name: state.name,
-                        color: state.color,
-                        icon: state.icon,
-                    };
-                });
+            /**
+             * @typedef {Object} Stage
+             * @property {String} name name of Stage
+             * @property {String} state name of init state of stage
+             * @property {String} index index of stage
+             */
+            /**
+             * Add stage to stageTracker
+             * @param {Stage} stage Stage object to add
+             */
+            self.addStage = function(stage){
+                self.stages[getSlashedNames(stage.name, true)] = {
+                    name: stage.name,
+                    state: stage.state,
+                    index: stage.index
+                };
             }
 
-            if(Array.isArray(settings.stages)){
-                settings.stages.forEach(function(stage){
-                    self.stages[getSlashedNames(stage.name, true)] = {
-                        name: stage.name,
-                        state: stage.state
-                    };
-                });
+            /**
+             * Remove stage
+             * @param {String} stage stage to remove
+             */
+            self.removeStage = function(stage){
+                delete self.stages[stage];
             }
 
+            /**
+             * @typedef {Object} State
+             * @property {String} name name of State
+             * @property {String} color color of state icon
+             * @property {String} icon icon class to state
+             */
+            /**
+             * Add stage to stageTracker
+             * @param {State} state State object to add
+             */
+            self.addState = function(state){
+                self.states[getSlashedNames(state.name)] = {
+                    name: state.name,
+                    color: state.color,
+                    icon: state.icon,
+                };
+            }
+
+            /**
+             * Remove state
+             * @param {String} state state to remove
+             */
+            self.removeState = function(state){
+                delete self.states[state];
+            }
+
+            /**
+             * Set state to stage and reload
+             * @param {String} stage Stage to change
+             * @param {String} state State to set
+             */
+            self.setState = function(stage, state){
+                self.stages[stage].state = self.states[state].name
+            }
+
+            /**
+             * Set Index to stage and reload
+             * @param {String} stage Stage to change
+             * @param {Number} index Index to sort
+             */
+            self.setIndex = function(stage, index){
+                self.stages[stage].index = index;
+            }
+
+            /**
+             * load or reload all content
+             */
             self.load = function(){
                 self.loadStages();
                 self.loadStates();
             }
 
+            /**
+             * load or reload stages
+             */
             self.loadStages = function(){
                 $(cont).empty()
                 var keys = Object.keys(self.stages);
+                keys.sort(function(a, b){ return self.stages[a].index - self.stages[b].index; });
                 keys.forEach(function(name, index){
                     var stage = self.stages[name];
                     var state = self.states[getSlashedNames(stage.state)];
-                    $.fn.StateTracker.createStage(stage.name, state).appendTo(cont);
-                    if((index +1) < keys.length)
-                        $.fn.StateTracker.createArrow().appendTo(cont);
+                    var minicont = $('<div></div>').addClass('stTracker__box');
+                    if(index > 0)
+                        $.fn.StateTracker.createArrow('R').appendTo(minicont);
+                    $.fn.StateTracker.createStage(stage.name, state, stage.index).appendTo(minicont);
+                    $(minicont).appendTo(cont);
                 });
             };
 
+            /**
+             * load or reload states
+             */
             self.loadStates = function(){
-                var keys = Object.keys(self.states);
-                keys.forEach(function(name, index){
-                    var state = self.states[name];
-                    createIconStateClass(state.name, state.color);
-                });
                 var stages = $('.stTracker__stage').toArray();
                 if(Array.isArray(stages)){
                     stages.forEach(function(stage, ind){
-                        $(stage).children('.stTracker__icon').addClass('.stTracker__icon--' +getSlashedNames(stage.state.name))
-                                .children('i').addClass(stage.state.icon);
+                        $(stage).children('.stTracker__icon')
+                                .children('i').addClass((stage.state && stage.state.icon)? stage.state.icon: "").css('color', (stage.state && stage.state.color)? stage.state.color: "");
                     });
                 }
             }
 
-            self.load();
+            /**
+             * @private Init function
+             */
+            var init = function(){
+                if(Array.isArray(settings.states)){
+                    settings.states.forEach(function(state){
+                        self.addState(state);
+                    });
+                }
+    
+                if(Array.isArray(settings.stages)){
+                    settings.stages.forEach(function(stage){
+                        self.addStage(stage);
+                    });
+                }
+                self.load();
+            }
+
+            init();
+
         });
 
     };
